@@ -8,9 +8,7 @@
     :copyright: (c) 2014 by messense.
     :license: MIT, see LICENSE for more details.
 """
-from __future__ import absolute_import, unicode_literals
 import copy
-import six
 
 from wechatpy.fields import (
     BaseField,
@@ -19,7 +17,6 @@ from wechatpy.fields import (
     DateTimeField,
     FieldDescriptor
 )
-from wechatpy.utils import to_text, to_binary
 
 
 MESSAGE_TYPES = {}
@@ -54,7 +51,7 @@ class MessageMetaClass(type):
         return cls
 
 
-class BaseMessage(six.with_metaclass(MessageMetaClass)):
+class BaseMessage(metaclass=MessageMetaClass):
     """Base class for all messages and events"""
     type = 'unknown'
     id = IntegerField('MsgId', 0)
@@ -71,10 +68,7 @@ class BaseMessage(six.with_metaclass(MessageMetaClass)):
             klass=self.__class__.__name__,
             msg=repr(self._data)
         )
-        if six.PY2:
-            return to_binary(_repr)
-        else:
-            return to_text(_repr)
+        return _repr
 
 
 @register_message('text')

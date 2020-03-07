@@ -1,6 +1,4 @@
 #!/usr/bin/env python
-from __future__ import print_function
-
 try:
     # python setup.py test
     import multiprocessing  # NOQA
@@ -43,7 +41,7 @@ with open('requirements.txt') as f:
 
 setup(
     name='wechatpy',
-    version='1.8.3',
+    version='1.8.11',
     author='messense',
     author_email='messense@icloud.com',
     url='https://github.com/jxtech/wechatpy',
@@ -69,10 +67,10 @@ setup(
         'Operating System :: POSIX',
         'Operating System :: POSIX :: Linux',
         'Programming Language :: Python',
-        'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
+        'Programming Language :: Python :: 3.8',
         'Programming Language :: Python :: Implementation :: CPython',
         'Programming Language :: Python :: Implementation :: PyPy',
         'Intended Audience :: Developers',

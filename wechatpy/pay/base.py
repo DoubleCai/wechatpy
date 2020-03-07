@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
-from __future__ import absolute_import, unicode_literals
 
 
-class BaseWeChatPayAPI(object):
+class BaseWeChatPayAPI:
     """ WeChat Pay API base class """
     def __init__(self, client=None):
         self._client = client

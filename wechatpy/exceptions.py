@@ -8,11 +8,6 @@
     :copyright: (c) 2014 by messense.
     :license: MIT, see LICENSE for more details.
 """
-from __future__ import absolute_import, unicode_literals
-
-import six
-
-from wechatpy.utils import to_binary, to_text
 
 
 class WeChatException(Exception):
@@ -27,14 +22,11 @@ class WeChatException(Exception):
         self.errmsg = errmsg
 
     def __str__(self):
-        _repr = 'Error code: {code}, message: {msg}'.format(
+        s = 'Error code: {code}, message: {msg}'.format(
             code=self.errcode,
             msg=self.errmsg
         )
-        if six.PY2:
-            return to_binary(_repr)
-        else:
-            return to_text(_repr)
+        return s
 
     def __repr__(self):
         _repr = '{klass}({code}, {msg})'.format(
@@ -42,10 +34,7 @@ class WeChatException(Exception):
             code=self.errcode,
             msg=self.errmsg
         )
-        if six.PY2:
-            return to_binary(_repr)
-        else:
-            return to_text(_repr)
+        return _repr
 
 
 class WeChatClientException(WeChatException):
@@ -76,6 +65,13 @@ class InvalidAppIdException(WeChatException):
 
     def __init__(self, errcode=-40005, errmsg='Invalid AppId'):
         super(InvalidAppIdException, self).__init__(errcode, errmsg)
+
+
+class InvalidMchIdException(WeChatException):
+    """Invalid mch_id exception class"""
+
+    def __init__(self, errcode=-40006, errmsg='Invalid MchId'):
+        super(InvalidMchIdException, self).__init__(errcode, errmsg)
 
 
 class WeChatOAuthException(WeChatClientException):
@@ -113,20 +109,13 @@ class WeChatPayException(WeChatClientException):
         self.return_msg = return_msg
 
     def __str__(self):
-        if six.PY2:
-            return to_binary('Error code: {code}, message: {msg}. Pay Error code: {pay_code}, message: {pay_msg}'.format(
+        _str = 'Error code: {code}, message: {msg}. Pay Error code: {pay_code}, message: {pay_msg}'.format(
                 code=self.return_code,
                 msg=self.return_msg,
                 pay_code=self.errcode,
                 pay_msg=self.errmsg
-            ))
-        else:
-            return to_text('Error code: {code}, message: {msg}. Pay Error code: {pay_code}, message: {pay_msg}'.format(
-                code=self.return_code,
-                msg=self.return_msg,
-                pay_code=self.errcode,
-                pay_msg=self.errmsg
-            ))
+            )
+        return _str
 
     def __repr__(self):
         _repr = '{klass}({code}, {msg}). Pay({pay_code}, {pay_msg})'.format(
@@ -136,7 +125,4 @@ class WeChatPayException(WeChatClientException):
             pay_code=self.errcode,
             pay_msg=self.errmsg
         )
-        if six.PY2:
-            return to_binary(_repr)
-        else:
-            return to_text(_repr)
+        return _repr

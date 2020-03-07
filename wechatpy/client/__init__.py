@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from __future__ import absolute_import, unicode_literals
+
 
 import time
 
@@ -40,6 +40,7 @@ class WeChatClient(BaseWeChatClient):
     wifi = api.WeChatWiFi()
     wxa = api.WeChatWxa()
     marketing = api.WeChatMarketing()
+    cloud = api.WeChatCloud()
 
     def __init__(self, appid, secret, access_token=None,
                  session=None, timeout=None, auto_retry=True):

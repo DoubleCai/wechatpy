@@ -1,9 +1,8 @@
 # -*- coding: utf-8 -*-
-from __future__ import absolute_import, unicode_literals
 
 import re
+from urllib.parse import urlencode
 
-import six
 from optionaldict import optionaldict
 
 from wechatpy.client.api.base import BaseWeChatAPI
@@ -331,8 +330,8 @@ class WeChatMessage(BaseWeChatAPI):
                 }
                 endpoint = 'message/mass/sendall'
         else:
-            if not isinstance(group_or_users, six.string_types):
-                raise ValueError('group_or_users should be string types')
+            if not isinstance(group_or_users, str):
+                raise ValueError('group_or_users should be str')
             # 预览接口
             if self.OPENID_RE.match(group_or_users):
                 # 按照 openid 预览群发
@@ -694,7 +693,7 @@ class WeChatMessage(BaseWeChatAPI):
             ('redirect_url', redirect_url),
             ('reserved', reserved),
         ]
-        encoded_params = six.moves.urllib.parse.urlencode(params)
+        encoded_params = urlencode(params)
         url = '{base}?{params}#wechat_redirect'.format(base=base_url, params=encoded_params)
         return url
 
@@ -727,3 +726,22 @@ class WeChatMessage(BaseWeChatAPI):
             'message/template/subscribe',
             data=post_data,
         )
+
+    def send_msg_menu(self, openid, msgmenu, account=None):
+        """
+        发送菜单消息
+
+        详情请参考
+        https://developers.weixin.qq.com/doc/offiaccount/Message_Management/Service_Center_messages.html#7
+
+        :param openid: 填接收消息的用户openid
+        :param msgmenu: 菜单字典
+        :param account: 可选，客服账号
+        :return: 返回的 JSON 数据包
+        """
+        data = {
+            'touser': openid,
+            'msgtype': 'msgmenu',
+            'msgmenu': msgmenu
+        }
+        return self._send_custom_message(data, account=account)

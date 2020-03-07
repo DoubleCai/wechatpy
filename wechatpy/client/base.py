@@ -1,15 +1,13 @@
 # -*- coding: utf-8 -*-
-from __future__ import absolute_import, unicode_literals
+import json
 import time
 import inspect
 import logging
-import warnings
 
-import six
 import requests
 
 from wechatpy.constants import WeChatErrorCode
-from wechatpy.utils import json, get_querystring
+from wechatpy.utils import get_querystring
 from wechatpy.session.memorystorage import MemoryStorage
 from wechatpy.exceptions import WeChatClientException, APILimitedException
 from wechatpy.client.api.base import BaseWeChatAPI
@@ -22,7 +20,7 @@ def _is_api_endpoint(obj):
     return isinstance(obj, BaseWeChatAPI)
 
 
-class BaseWeChatClient(object):
+class BaseWeChatClient:
     API_BASE_URL = ''
 
     def __new__(cls, *args, **kwargs):
@@ -42,7 +40,7 @@ class BaseWeChatClient(object):
         self.timeout = timeout
         self.auto_retry = auto_retry
 
-        if isinstance(session, six.string_types):
+        if isinstance(session, str):
             from shove import Shove
             from wechatpy.session.shovestorage import ShoveStorage
 
@@ -172,24 +170,12 @@ class BaseWeChatClient(object):
             **kwargs
         )
 
-    def _get(self, url, **kwargs):
-        warnings.warn('`_get` method of `WeChatClient` is deprecated, will be removed in 1.6,'
-                      'Use `get` instead',
-                      DeprecationWarning, stacklevel=2)
-        return self.get(url, **kwargs)
-
     def post(self, url, **kwargs):
         return self._request(
             method='post',
             url_or_endpoint=url,
             **kwargs
         )
-
-    def _post(self, url, **kwargs):
-        warnings.warn('`_post` method of `WeChatClient` is deprecated, will be removed in 1.6,'
-                      'Use `post` instead',
-                      DeprecationWarning, stacklevel=2)
-        return self.post(url, **kwargs)
 
     def _fetch_access_token(self, url, params):
         """ The real fetch access token """

@@ -1,14 +1,13 @@
 # -*- coding: utf-8 -*-
-from __future__ import absolute_import, unicode_literals
+import io
 import os
-import six
+import json
 import unittest
 
 from httmock import urlmatch, HTTMock, response
 
 from wechatpy.enterprise import WeChatClient
 from wechatpy.exceptions import WeChatClientException
-from wechatpy.utils import json
 
 
 _TESTS_PATH = os.path.abspath(os.path.dirname(__file__))
@@ -218,7 +217,7 @@ class WeChatClientTestCase(unittest.TestCase):
             self.assertEqual('zhangsan', user_id)
 
     def test_upload_media(self):
-        media_file = six.StringIO('nothing')
+        media_file = io.StringIO('nothing')
         with HTTMock(wechat_api_mock):
             media = self.client.media.upload('image', media_file)
             self.assertEqual('image', media['type'])

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from __future__ import absolute_import, unicode_literals
+
 
 from wechatpy.client.base import BaseWeChatClient
 from wechatpy.enterprise.client import api
@@ -11,8 +11,10 @@ class WeChatClient(BaseWeChatClient):
     agent = api.WeChatAgent()
     appchat = api.WeChatAppChat()
     batch = api.WeChatBatch()
+    calendar = api.WeChatCalendar()
     chat = api.WeChatChat()
     department = api.WeChatDepartment()
+    external_contact = api.WeChatExternalContact()
     jsapi = api.WeChatJSAPI()
     material = api.WeChatMaterial()
     media = api.WeChatMedia()
@@ -20,11 +22,12 @@ class WeChatClient(BaseWeChatClient):
     message = api.WeChatMessage()
     misc = api.WeChatMisc()
     oauth = api.WeChatOAuth()
+    schedule = api.WeChatSchedule()
     service = api.WeChatService()
     shakearound = api.WeChatShakeAround()
     tag = api.WeChatTag()
     user = api.WeChatUser()
-    external_contact = api.WeChatExternalContact()
+    OA = api.WeChatOA()
 
     def __init__(self, corp_id, secret, access_token=None,
                  session=None, timeout=None, auto_retry=True):

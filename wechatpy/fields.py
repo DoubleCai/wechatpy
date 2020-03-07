@@ -8,13 +8,10 @@
     :copyright: (c) 2014 by messense.
     :license: MIT, see LICENSE for more details.
 """
-from __future__ import absolute_import, unicode_literals
 import time
 from datetime import datetime
 import base64
 import copy
-
-import six
 
 from wechatpy.utils import to_text, to_binary, ObjectDict, timezone
 
@@ -22,7 +19,7 @@ from wechatpy.utils import to_text, to_binary, ObjectDict, timezone
 default_timezone = timezone('Asia/Shanghai')
 
 
-class FieldDescriptor(object):
+class FieldDescriptor:
 
     def __init__(self, field):
         self.field = field
@@ -37,7 +34,7 @@ class FieldDescriptor(object):
             if isinstance(value, dict):
                 value = ObjectDict(value)
             if value and not isinstance(value, (dict, list, tuple)) and \
-                    six.callable(self.field.converter):
+                    callable(self.field.converter):
                 value = self.field.converter(value)
             return value
         return self.field
@@ -46,7 +43,7 @@ class FieldDescriptor(object):
         instance._data[self.attr_name] = value
 
 
-class BaseField(object):
+class BaseField:
     converter = None
 
     def __init__(self, name, default=None):
@@ -65,10 +62,7 @@ class BaseField(object):
             klass=self.__class__.__name__,
             name=repr(self.name)
         )
-        if six.PY2:
-            return to_binary(_repr)
-        else:
-            return to_text(_repr)
+        return _repr
 
     def add_to_class(self, klass, name):
         self.klass = klass

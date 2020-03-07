@@ -8,17 +8,19 @@
     :copyright: (c) 2014 by messense.
     :license: MIT, see LICENSE for more details.
 """
-from __future__ import absolute_import, unicode_literals
+
 import json
 import time
 import base64
+import hashlib
 
 from wechatpy.utils import to_text, to_binary, WeChatSigner
 from wechatpy.exceptions import (
     InvalidAppIdException,
+    InvalidMchIdException,
     InvalidSignatureException
 )
-from wechatpy.crypto.base import BasePrpCrypto, WeChatCipher
+from wechatpy.crypto.base import BasePrpCrypto, WeChatCipher, BaseRefundCrypto
 from wechatpy.crypto.pkcs7 import PKCS7Encoder
 
 
@@ -37,7 +39,7 @@ class PrpCrypto(BasePrpCrypto):
         return self._decrypt(text, app_id, InvalidAppIdException)
 
 
-class BaseWeChatCrypto(object):
+class BaseWeChatCrypto:
 
     def __init__(self, token, encoding_aes_key, _id):
         encoding_aes_key = to_binary(encoding_aes_key + '=')
@@ -122,7 +124,7 @@ class WeChatCrypto(BaseWeChatCrypto):
         )
 
 
-class WeChatWxaCrypto(object):
+class WeChatWxaCrypto:
     def __init__(self, key, iv, app_id):
         self.cipher = WeChatCipher(base64.b64decode(key), base64.b64decode(iv))
         self.app_id = app_id
@@ -135,3 +137,36 @@ class WeChatWxaCrypto(object):
         if decrypted_msg['watermark']['appid'] != self.app_id:
             raise InvalidAppIdException()
         return decrypted_msg
+
+
+class RefundCrypto(BaseRefundCrypto):
+
+    def encrypt(self, text):
+        return self._encrypt(text)
+
+    def decrypt(self, text):
+        return self._decrypt(text)
+
+
+class WeChatRefundCrypto:
+
+    def __init__(self, key):
+        self.key = to_binary(hashlib.md5(to_binary(key)).hexdigest())
+        assert len(self.key) == 32
+
+    def _decrypt_message(self, msg, appid, mch_id, crypto_class=None):
+        import xmltodict
+        if not isinstance(msg, dict):
+            msg = xmltodict.parse(to_text(msg))['xml']
+
+        req_info = msg['req_info']
+        if msg['appid'] != appid:
+            raise InvalidAppIdException()
+        if msg['mch_id'] != mch_id:
+            raise InvalidMchIdException()
+        pc = crypto_class(self.key)
+        ret = pc.decrypt(req_info)
+        return xmltodict.parse(to_text(ret))['root']
+
+    def decrypt_message(self, msg, appid, mch_id):
+        return self._decrypt_message(msg, appid, mch_id, RefundCrypto)

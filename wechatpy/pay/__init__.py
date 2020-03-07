@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from __future__ import absolute_import, unicode_literals
+
 import inspect
 import logging
 
@@ -8,6 +8,7 @@ import xmltodict
 from xml.parsers.expat import ExpatError
 from optionaldict import optionaldict
 
+from wechatpy.crypto import WeChatRefundCrypto
 from wechatpy.utils import random_string
 from wechatpy.exceptions import WeChatPayException, InvalidSignatureException
 from wechatpy.pay.utils import (
@@ -23,7 +24,7 @@ def _is_api_endpoint(obj):
     return isinstance(obj, BaseWeChatPayAPI)
 
 
-class WeChatPay(object):
+class WeChatPay:
     """
     微信支付接口
 
@@ -106,9 +107,11 @@ class WeChatPay(object):
         else:
             url = url_or_endpoint
 
-        if isinstance(kwargs.get('data'), dict):
+        if isinstance(kwargs.get('data', ''), dict):
             data = kwargs['data']
-            data.setdefault('mch_id', self.mch_id)
+            if 'mchid' not in data:
+                # Fuck Tencent
+                data.setdefault('mch_id', self.mch_id)
             data.setdefault('sub_mch_id', self.sub_mch_id)
             data.setdefault('nonce_str', random_string(32))
             data = optionaldict(data)
@@ -191,6 +194,37 @@ class WeChatPay(object):
     def check_signature(self, params):
         return _check_signature(params, self.api_key if not self.sandbox else self.sandbox_api_key)
 
+    @classmethod
+    def get_payment_data(cls, xml):
+        """
+        解析微信支付结果通知，获得appid, mch_id, out_trade_no, transaction_id
+        如果你需要进一步判断，请先用appid, mch_id来生成WeChatPay,
+        然后用`wechatpay.parse_payment_result(xml)`来校验支付结果
+
+        使用示例::
+
+            from wechatpy.pay import WeChatPay
+            # 假设你已经获取了微信服务器推送的请求中的xml数据并存入xml变量
+            data = WeChatPay.get_payment_appid(xml)
+            {
+                "appid": "公众号或者小程序的id",
+                "mch_id": "商户id",
+            }
+
+        """
+        try:
+            data = xmltodict.parse(xml)
+        except (xmltodict.ParsingInterrupted, ExpatError):
+            raise ValueError("invalid xml")
+        if not data or 'xml' not in data:
+            raise ValueError("invalid xml")
+        return {
+            "appid": data["appid"],
+            "mch_id": data["mch_id"],
+            "out_trade_no": data["out_trade_no"],
+            "transaction_id": data["transaction_id"],
+        }
+
     def parse_payment_result(self, xml):
         """解析微信支付结果通知"""
         try:
@@ -211,6 +245,15 @@ class WeChatPay(object):
             if key in data:
                 data[key] = int(data[key])
         data['sign'] = sign
+        return data
+
+    def parse_refund_notify_result(self, xml):
+        """解析微信退款结果通知"""
+        refund_crypto = WeChatRefundCrypto(self.api_key if not self.sandbox else self.sandbox_api_key)
+        data = refund_crypto.decrypt_message(xml, self.appid, self.mch_id)
+        for key in ('total_fee', 'settlement_total_fee', 'refund_fee', 'settlement_refund_fee'):
+            if key in data:
+                data[key] = int(data[key])
         return data
 
     @property

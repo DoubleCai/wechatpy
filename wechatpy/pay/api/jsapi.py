@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from __future__ import absolute_import, unicode_literals
+
 import time
 import logging
 from wechatpy.utils import random_string, to_text
@@ -7,6 +7,7 @@ from wechatpy.pay.base import BaseWeChatPayAPI
 from wechatpy.pay.utils import calculate_signature
 
 logger = logging.getLogger(__name__)
+
 
 class WeChatJSAPI(BaseWeChatPayAPI):
 

@@ -1,16 +1,14 @@
 # -*- coding: utf-8 -*-
-from __future__ import absolute_import, print_function, unicode_literals
-
+import io
 import os
+import json
 import unittest
 from datetime import datetime
 
-import six
 from httmock import HTTMock, response, urlmatch
 
 from wechatpy import WeChatClient
 from wechatpy.exceptions import WeChatClientException
-from wechatpy.utils import json
 
 _TESTS_PATH = os.path.abspath(os.path.dirname(__file__))
 _FIXTURE_PATH = os.path.join(_TESTS_PATH, 'fixtures')
@@ -71,7 +69,7 @@ class WeChatClientTestCase(unittest.TestCase):
             self.assertEqual('1234567890', self.client.access_token)
 
     def test_upload_media(self):
-        media_file = six.StringIO('nothing')
+        media_file = io.StringIO('nothing')
         with HTTMock(wechat_api_mock):
             media = self.client.media.upload('image', media_file)
             self.assertEqual('image', media['type'])
@@ -396,7 +394,7 @@ class WeChatClientTestCase(unittest.TestCase):
             self.assertEqual(0, result['errcode'])
 
     def test_customservice_upload_headimg(self):
-        media_file = six.StringIO('nothing')
+        media_file = io.StringIO('nothing')
         with HTTMock(wechat_api_mock):
             result = self.client.customservice.upload_headimg(
                 'test1@test',
@@ -624,7 +622,9 @@ class WeChatClientTestCase(unittest.TestCase):
                 'bxLdikRXVbTPdHSM05e5u5sUoXNKd8-41ZO3MhKoyN5OfkWITDGgnr2fwJ0m9E8NYzWKVZvdVtaUgWvsdshFKA',  # NOQA
                 ticket
             )
-            self.assertTrue(7200 < self.client.session.get('{0}_jsapi_card_ticket_expires_at'.format(self.client.appid)))
+            self.assertTrue(
+                7200 < self.client.session.get('{0}_jsapi_card_ticket_expires_at'.format(self.client.appid))
+            )
             self.assertEqual(
                 self.client.session.get('{0}_jsapi_card_ticket'.format(self.client.appid)),
                 'bxLdikRXVbTPdHSM05e5u5sUoXNKd8-41ZO3MhKoyN5OfkWITDGgnr2fwJ0m9E8NYzWKVZvdVtaUgWvsdshFKA',
@@ -713,7 +713,7 @@ class WeChatClientTestCase(unittest.TestCase):
 
     def test_shakearound_add_material(self):
         with HTTMock(wechat_api_mock):
-            media_file = six.StringIO('nothing')
+            media_file = io.StringIO('nothing')
             res = self.client.shakearound.add_material(media_file, 'icon')
             self.assertEqual(
                 'http://shp.qpic.cn/wechat_shakearound_pic/0/1428377032e9dd2797018cad79186e03e8c5aec8dc/120',  # NOQA
@@ -832,7 +832,7 @@ class WeChatClientTestCase(unittest.TestCase):
             self.assertEqual(2, len(res))
 
     def test_upload_mass_image(self):
-        media_file = six.StringIO('nothing')
+        media_file = io.StringIO('nothing')
         with HTTMock(wechat_api_mock):
             res = self.client.media.upload_mass_image(media_file)
         self.assertEqual(
@@ -898,7 +898,9 @@ class WeChatClientTestCase(unittest.TestCase):
 
     def test_change_openid(self):
         with HTTMock(wechat_api_mock):
-            res = self.client.user.change_openid('xxxxx', ['oEmYbwN-n24jxvk4Sox81qedINkQ', 'oEmYbwH9uVd4RKJk7ZZg6SzL6tTo'])
+            res = self.client.user.change_openid(
+                'xxxxx', ['oEmYbwN-n24jxvk4Sox81qedINkQ', 'oEmYbwH9uVd4RKJk7ZZg6SzL6tTo']
+            )
         self.assertEqual(2, len(res))
         self.assertEqual('o2FwqwI9xCsVadFah_HtpPfaR-X4', res[0]['new_openid'])
         self.assertEqual('ori_openid error', res[1]['err_msg'])

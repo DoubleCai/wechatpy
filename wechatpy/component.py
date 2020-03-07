@@ -8,16 +8,14 @@
     :copyright: (c) 2015 by hunter007.
     :license: MIT, see LICENSE for more details.
 """
-from __future__ import absolute_import, unicode_literals
-
+import json
 import logging
 import time
 import warnings
+from urllib.parse import quote
 
 import requests
-import six
 import xmltodict
-from six.moves.urllib.parse import quote
 
 from wechatpy.client import WeChatComponentClient
 from wechatpy.constants import WeChatErrorCode
@@ -27,7 +25,7 @@ from wechatpy.exceptions import APILimitedException, WeChatClientException, WeCh
 from wechatpy.fields import DateTimeField, StringField
 from wechatpy.messages import MessageMetaClass
 from wechatpy.session.memorystorage import MemoryStorage
-from wechatpy.utils import get_querystring, json, to_binary, to_text, ObjectDict
+from wechatpy.utils import get_querystring, to_text, ObjectDict
 
 logger = logging.getLogger(__name__)
 
@@ -41,7 +39,7 @@ def register_component_message(msg_type):
     return register
 
 
-class BaseComponentMessage(six.with_metaclass(MessageMetaClass)):
+class BaseComponentMessage(metaclass=MessageMetaClass):
     """Base class for all component messages and events"""
     type = 'unknown'
     appid = StringField('AppId')
@@ -51,14 +49,11 @@ class BaseComponentMessage(six.with_metaclass(MessageMetaClass)):
         self._data = message
 
     def __repr__(self):
-        _repr = "{klass}({msg})".format(
+        s = "{klass}({msg})".format(
             klass=self.__class__.__name__,
             msg=repr(self._data)
         )
-        if six.PY2:
-            return to_binary(_repr)
-        else:
-            return to_text(_repr)
+        return s
 
 
 @register_component_message('component_verify_ticket')
@@ -110,7 +105,7 @@ class ComponentUnknownMessage(BaseComponentMessage):
     type = 'unknown'
 
 
-class BaseWeChatComponent(object):
+class BaseWeChatComponent:
     API_BASE_URL = 'https://api.weixin.qq.com/cgi-bin'
 
     def __init__(self,
@@ -135,7 +130,7 @@ class BaseWeChatComponent(object):
         self.session = session or MemoryStorage()
         self.auto_retry = auto_retry
 
-        if isinstance(session, six.string_types):
+        if isinstance(session, str):
             from shove import Shove
             from wechatpy.session.shovestorage import ShoveStorage
 
@@ -422,6 +417,22 @@ class WeChatComponent(BaseWeChatComponent):
             }
         )
 
+    def get_authorizer_list(self, offset=0, count=500):
+        """
+        拉取所有已授权的帐号信息
+
+        :params offset: 偏移位置/起始位置
+        :params count: 拉取数量
+        """
+        return self.post(
+            '/component/api_get_authorizer_list',
+            data={
+                'component_appid': self.component_appid,
+                'offset': offset,
+                'count': count,
+            }
+        )
+
     def get_authorizer_option(self, authorizer_appid, option_name):
         """
         获取授权方的选项设置信息
@@ -455,25 +466,6 @@ class WeChatComponent(BaseWeChatComponent):
                 'option_name': option_name,
                 'option_value': option_value
             }
-        )
-
-    def get_client_by_authorization_code(self, authorization_code):
-        """
-        通过授权码直接获取 Client 对象
-
-        :params authorization_code: 授权code,会在授权成功时返回给第三方平台，详见第三方平台授权流程说明
-        """
-        warnings.warn('`get_client_by_authorization_code` method of `WeChatComponent` is deprecated,'
-                      'Use `parse_message` parse message and '
-                      'Use `get_client_by_appid` instead',
-                      DeprecationWarning, stacklevel=2)
-        result = self.query_auth(authorization_code)
-        access_token = result['authorization_info']['authorizer_access_token']
-        refresh_token = result['authorization_info']['authorizer_refresh_token']  # NOQA
-        authorizer_appid = result['authorization_info']['authorizer_appid']  # noqa
-        return WeChatComponentClient(
-            authorizer_appid, self, access_token, refresh_token,
-            session=self.session
         )
 
     def get_client_by_appid(self, authorizer_appid):
@@ -527,39 +519,6 @@ class WeChatComponent(BaseWeChatComponent):
             msg.query_auth_result = self.query_auth(msg.authorization_code)
         return msg
 
-    def cache_component_verify_ticket(self, msg, signature, timestamp, nonce):
-        """
-        处理 wechat server 推送的 component_verify_ticket消息
-
-        :params msg: 加密内容
-        :params signature: 消息签名
-        :params timestamp: 时间戳
-        :params nonce: 随机数
-        """
-        warnings.warn('`cache_component_verify_ticket` method of `WeChatComponent` is deprecated,'
-                      'Use `parse_message` instead',
-                      DeprecationWarning, stacklevel=2)
-        content = self.crypto.decrypt_message(msg, signature, timestamp, nonce)
-        message = xmltodict.parse(to_text(content))['xml']
-        o = ComponentVerifyTicketMessage(message)
-        self.session.set(o.type, o.verify_ticket)
-
-    def get_unauthorized(self, msg, signature, timestamp, nonce):
-        """
-        处理取消授权通知
-
-        :params msg: 加密内容
-        :params signature: 消息签名
-        :params timestamp: 时间戳
-        :params nonce: 随机数
-        """
-        warnings.warn('`get_unauthorized` method of `WeChatComponent` is deprecated,'
-                      'Use `parse_message` instead',
-                      DeprecationWarning, stacklevel=2)
-        content = self.crypto.decrypt_message(msg, signature, timestamp, nonce)
-        message = xmltodict.parse(to_text(content))['xml']
-        return ComponentUnauthorizedMessage(message)
-
     def get_component_oauth(self, authorizer_appid):
         """
         代公众号 OAuth 网页授权
@@ -569,7 +528,7 @@ class WeChatComponent(BaseWeChatComponent):
         return ComponentOAuth(authorizer_appid, component=self)
 
 
-class ComponentOAuth(object):
+class ComponentOAuth:
     """ 微信开放平台 代公众号 OAuth 网页授权
 
     详情请参考

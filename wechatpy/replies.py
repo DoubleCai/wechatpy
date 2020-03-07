@@ -7,9 +7,8 @@
     :copyright: (c) 2014 by messense.
     :license: MIT, see LICENSE for more details.
 """
-from __future__ import absolute_import, unicode_literals
+
 import time
-import six
 import xmltodict
 
 from wechatpy.fields import (
@@ -24,7 +23,6 @@ from wechatpy.fields import (
     HardwareField,
 )
 from wechatpy.messages import BaseMessage, MessageMetaClass
-from wechatpy.utils import to_text, to_binary
 
 
 REPLY_TYPES = {}
@@ -37,7 +35,7 @@ def register_reply(reply_type):
     return register
 
 
-class BaseReply(six.with_metaclass(MessageMetaClass)):
+class BaseReply(metaclass=MessageMetaClass):
     """Base class for all replies"""
     source = StringField('FromUserName')
     target = StringField('ToUserName')
@@ -79,10 +77,7 @@ class BaseReply(six.with_metaclass(MessageMetaClass)):
         return tpl.format(data=data)
 
     def __str__(self):
-        if six.PY2:
-            return to_binary(self.render())
-        else:
-            return to_text(self.render())
+        return self.render()
 
 
 @register_reply('empty')
@@ -324,7 +319,7 @@ def create_reply(reply, message=None, render=False):
         if message:
             r.source = message.target
             r.target = message.source
-    elif isinstance(reply, six.string_types):
+    elif isinstance(reply, str):
         r = TextReply(
             message=message,
             content=reply

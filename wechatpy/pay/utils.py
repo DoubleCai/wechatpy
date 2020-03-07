@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from __future__ import absolute_import, unicode_literals
+
 
 import base64
 import copy
@@ -7,11 +7,11 @@ import hashlib
 import hmac
 import socket
 import logging
-import six
 
 from wechatpy.utils import to_binary, to_text
 
 logger = logging.getLogger(__name__)
+
 
 def format_url(params, api_key=None):
     data = [to_binary('{0}={1}'.format(k, params[k])) for k in sorted(params) if params[k]]
@@ -39,18 +39,21 @@ def _check_signature(params, api_key):
     return sign == calculate_signature(_params, api_key)
 
 
-def dict_to_xml(d, sign):
+def dict_to_xml(d, sign=None):
     xml = ['<xml>\n']
     for k in sorted(d):
         # use sorted to avoid test error on Py3k
         v = d[k]
-        if isinstance(v, six.integer_types) or (isinstance(v, six.string_types) and v.isdigit()):
+        if isinstance(v, int) or (isinstance(v, str) and v.isdigit()):
             xml.append('<{0}>{1}</{0}>\n'.format(to_text(k), to_text(v)))
         else:
             xml.append(
                 '<{0}><![CDATA[{1}]]></{0}>\n'.format(to_text(k), to_text(v))
             )
-    xml.append('<sign><![CDATA[{0}]]></sign>\n</xml>'.format(to_text(sign)))
+    if sign:
+        xml.append('<sign><![CDATA[{0}]]></sign>\n</xml>'.format(to_text(sign)))
+    else:
+        xml.append('</xml>')
     return ''.join(xml)
 
 
